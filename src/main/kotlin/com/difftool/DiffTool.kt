@@ -12,7 +12,7 @@ object DiffTool {
         onlyCurrentIsNull(previous, current) -> generateChangesListForNonNullObject(previous!!, isPreviousNonNull = true)
         onlyPreviousIsNull(previous, current) -> generateChangesListForNonNullObject(current!!, isPreviousNonNull = false)
         bothHaveSameValues(previous!!, current!!) -> emptyList()
-        else -> TODO()
+        else -> generateChangesListTwoNonNullObjects(previous, current)
     }
 
     // Predicates
@@ -40,5 +40,12 @@ object DiffTool {
             else
                 PropertyUpdate(property.name, NULL_VALUE, propertyStringValue)
         }
+
+    inline fun <reified T : Any> generateChangesListTwoNonNullObjects(previous: T, current: T): List<ChangeType> {
+        return T::class.memberProperties
+            .map { property -> PropertyUpdate(property.name, property.call(previous), property.call(current))
+            }
+            .filter { (_, previousProperty, currentProperty) -> previousProperty != currentProperty }
+    }
 
 }

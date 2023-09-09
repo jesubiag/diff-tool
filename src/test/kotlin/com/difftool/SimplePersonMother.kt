@@ -8,6 +8,8 @@ object SimplePersonMother {
         const val Age = "age"
     }
 
-    fun aPerson(): SimplePerson = SimplePerson(1, "John", 40)
+    fun personJohn(): SimplePerson = SimplePerson(1, "John", 40)
+
+    fun personJohnOlder(): SimplePerson = SimplePerson(1, "John", 50)
 
 }
