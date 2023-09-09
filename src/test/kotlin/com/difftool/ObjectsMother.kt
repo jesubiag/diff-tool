@@ -4,9 +4,9 @@ object ObjectsMother {
 
     object Properties {
         // SimplePerson
-        const val Id = "id"
-        const val Name = "name"
-        const val Age = "age"
+        const val PersonId = "id"
+        const val PersonName = "name"
+        const val PersonAge = "age"
 
         // Address (nested)
         const val AddressStreet = "address.street"
@@ -15,6 +15,11 @@ object ObjectsMother {
         // City (nested)
         const val CityName = "address.city.name"
         const val CityState = "address.city.state"
+
+        // SimpleStudent
+        const val StudentId = "id"
+        const val StudentName = "name"
+        const val StudentSubjects = "subjects"
     }
 
     fun personJohn(): SimplePerson = SimplePerson(1, "John", 40)
@@ -28,6 +33,10 @@ object ObjectsMother {
     fun doubleNestedPersonGary(): DoubleNestedPerson = DoubleNestedPerson(3, "Gary", 15, aNestedAddress())
 
     fun doubleNestedPersonGaryOlderMoved(): DoubleNestedPerson = DoubleNestedPerson(3, "Gary", 20, aDifferentNestedAddress())
+
+    fun studentBrian(): SimpleStudent = SimpleStudent(100, "Brian", listOf("Math", "English"))
+
+    fun studentBrianOtherSubjects(): SimpleStudent = SimpleStudent(100, "Brian", listOf("Math", "Algebra", "Art"))
 
     private fun anAddress(): Address = Address("10th Street", 412)
 

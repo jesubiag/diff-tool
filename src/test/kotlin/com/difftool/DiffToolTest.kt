@@ -44,9 +44,9 @@ class DiffToolTest {
         val diff = DiffTool.diff(previous, current)
 
         val allCurrentPropertiesNull = arrayOf(
-            PropertyUpdate(ObjectsMother.Properties.Id, "1", "null"),
-            PropertyUpdate(ObjectsMother.Properties.Name, "John", "null"),
-            PropertyUpdate(ObjectsMother.Properties.Age, "40", "null")
+            PropertyUpdate(ObjectsMother.Properties.PersonId, "1", "null"),
+            PropertyUpdate(ObjectsMother.Properties.PersonName, "John", "null"),
+            PropertyUpdate(ObjectsMother.Properties.PersonAge, "40", "null")
         )
         assertThat(diff, containsInAnyOrder(*allCurrentPropertiesNull))
     }
@@ -59,9 +59,9 @@ class DiffToolTest {
         val diff = DiffTool.diff(previous, current)
 
         val allCurrentPropertiesNull = arrayOf(
-            PropertyUpdate(ObjectsMother.Properties.Id, "null", "1"),
-            PropertyUpdate(ObjectsMother.Properties.Name, "null", "John"),
-            PropertyUpdate(ObjectsMother.Properties.Age, "null", "40")
+            PropertyUpdate(ObjectsMother.Properties.PersonId, "null", "1"),
+            PropertyUpdate(ObjectsMother.Properties.PersonName, "null", "John"),
+            PropertyUpdate(ObjectsMother.Properties.PersonAge, "null", "40")
         )
         assertThat(diff, containsInAnyOrder(*allCurrentPropertiesNull))
     }
@@ -73,7 +73,7 @@ class DiffToolTest {
 
         val diff = DiffTool.diff(previous, current)
 
-        val newAgeProperty = PropertyUpdate(ObjectsMother.Properties.Age, "40", "50")
+        val newAgeProperty = PropertyUpdate(ObjectsMother.Properties.PersonAge, "40", "50")
         assertThat(diff, containsInAnyOrder(newAgeProperty))
     }
 
@@ -109,7 +109,7 @@ class DiffToolTest {
         val diff = DiffTool.diff(previous, current)
 
         val newAddressProperties = arrayOf(
-            PropertyUpdate(ObjectsMother.Properties.Age, "15", "20"),
+            PropertyUpdate(ObjectsMother.Properties.PersonAge, "15", "20"),
             PropertyUpdate(ObjectsMother.Properties.AddressStreet, "Oak Street", "51st Street"),
             PropertyUpdate(ObjectsMother.Properties.AddressNumber, "512", "3610"),
             PropertyUpdate(ObjectsMother.Properties.CityName, "Blue City", "Red City"),
@@ -118,5 +118,17 @@ class DiffToolTest {
         assertThat(diff, containsInAnyOrder(*newAddressProperties))
     }
 
+    @Test
+    fun `should return list of changes with added and removed when property is a list`() {
+        val previous = ObjectsMother.studentBrian()
+        val current = ObjectsMother.studentBrianOtherSubjects()
+
+        val diff = DiffTool.diff(previous, current)
+
+        val changedSubjectsProperties = arrayOf(
+            ListUpdate("subjects", listOf("Algebra", "Art"), listOf("English"))
+        )
+        assertThat(diff, containsInAnyOrder(*changedSubjectsProperties))
+    }
 
 }

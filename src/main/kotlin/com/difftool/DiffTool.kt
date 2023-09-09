@@ -5,6 +5,7 @@ import kotlin.reflect.KProperty1
 import kotlin.reflect.KType
 import kotlin.reflect.full.isSubtypeOf
 import kotlin.reflect.full.memberProperties
+import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.typeOf
 
 typealias Properties<T> = Collection<KProperty1<out T, *>>
@@ -63,11 +64,23 @@ object DiffTool {
                                                          suffix: String = ""): List<ChangeType> =
         properties.flatMap { property ->
             val propertyName = property.name
-            if (isTerminal(property.returnType))
-                listOf(PropertyUpdate("$suffix$propertyName", property.call(previous), property.call(current)))
-            else {
-                val subProperties = (property.returnType.classifier as? KClass<*>)?.memberProperties ?: throw Exception("Unable to get subproperties for $propertyName")
-                detectAndBuildChanges(property.call(previous), property.call(current), subProperties, "$suffix$propertyName.")
+            val propertyType = property.returnType
+            val fullPropertyName = "$suffix$propertyName"
+            when {
+                isTerminal(propertyType) -> {
+                    listOf(PropertyUpdate(fullPropertyName, property.call(previous), property.call(current)))
+                }
+                isCollectionOrArray(propertyType) -> {
+                    val previousCollection = toCollection(propertyType, property.call(previous))
+                    val currentCollection = toCollection(propertyType, property.call(current))
+                    val removed = previousCollection.minus(currentCollection.toSet()).map(Any?::toString)
+                    val added = currentCollection.minus(previousCollection.toSet()).map(Any?::toString)
+                    listOf(ListUpdate(fullPropertyName, added, removed))
+                }
+                else -> {
+                    val subProperties = (property.returnType.classifier as KClass<*>).memberProperties //?: throw Exception("Unable to get sub properties for $propertyName")
+                    detectAndBuildChanges(property.call(previous), property.call(current), subProperties, "$fullPropertyName.")
+                }
             }
         }.filter { changeType -> changeType.hasChanged }
 
@@ -81,5 +94,20 @@ object DiffTool {
             || kType.isSubtypeOf(typeOf<Float>())
             || kType.isSubtypeOf(typeOf<Char>())
             || kType.isSubtypeOf(typeOf<Number>())
+
+    private fun isCollectionOrArray(kType: KType): Boolean = isCollection(kType) || isArray(kType)
+
+    private fun isArray(kType: KType): Boolean = kType.isSubtypeOf(Array<Any>::class.starProjectedType)
+
+    private fun isCollection(kType: KType): Boolean = kType.isSubtypeOf(Collection::class.starProjectedType)
+
+    private fun toCollection(propertyType: KType, collectionOrArray: Any?): Collection<*> =
+        if (isCollection(propertyType)) {
+            collectionOrArray as Collection<*>
+        } else {
+            val destination = mutableSetOf<Any?>()
+            (collectionOrArray as Array<*>).toCollection(destination)
+            destination
+        }
 
 }
