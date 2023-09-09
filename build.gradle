@@ -12,6 +12,8 @@ repositories {
 
 dependencies {
     testImplementation 'org.jetbrains.kotlin:kotlin-test'
+    testImplementation 'org.hamcrest:hamcrest-all:1.3'
+
 }
 
 test {
