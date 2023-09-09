@@ -69,7 +69,7 @@ object DiffTool {
                 val subProperties = (property.returnType.classifier as? KClass<*>)?.memberProperties ?: throw Exception("Unable to get subproperties for $propertyName")
                 detectAndBuildChanges(property.call(previous), property.call(current), subProperties, "$suffix$propertyName.")
             }
-        }.filter { changeType -> changeType.previous != changeType.current }
+        }.filter { changeType -> changeType.hasChanged }
 
     // Other
 
