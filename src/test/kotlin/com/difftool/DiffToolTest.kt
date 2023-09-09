@@ -16,4 +16,14 @@ class DiffToolTest {
         assertThat(diff, empty())
     }
 
+    @Test
+    fun `should return empty when both objects are the same`() {
+        val o1 = SimplePerson(1, "John", 40)
+        val o2 = o1
+
+        val diff = DiffTool.diff(o1, o2)
+
+        assertThat(diff, empty())
+    }
+
 }
