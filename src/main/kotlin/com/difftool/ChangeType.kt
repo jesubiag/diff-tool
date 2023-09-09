@@ -1,7 +1,15 @@
 package com.difftool
 
-sealed interface ChangeType {}
+sealed interface ChangeType {
+    val property: String
+    val previous: String
+    val current: String
+}
 
-class PropertyUpdate : ChangeType {}
+data class PropertyUpdate(override val property: String,
+                          override val previous: String,
+                          override val current: String) : ChangeType {}
 
-class ListUpdate : ChangeType {}
+data class ListUpdate(override val property: String,
+                      override val previous: String,
+                      override val current: String) : ChangeType {}
