@@ -11,8 +11,11 @@ object DiffTool {
         bothObjectsAreTheSame(previous, current) -> emptyList()
         onlyCurrentIsNull(previous, current) -> generateChangesListForNonNullObject(previous!!, isPreviousNonNull = true)
         onlyPreviousIsNull(previous, current) -> generateChangesListForNonNullObject(current!!, isPreviousNonNull = false)
+        bothHaveSameValues(previous!!, current!!) -> emptyList()
         else -> TODO()
     }
+
+    // Predicates
 
     fun <T> bothObjectsAreNull(previous: T, current: T): Boolean = previous == null && current == null
 
@@ -22,13 +25,20 @@ object DiffTool {
 
     fun <T> onlyPreviousIsNull(previous: T, current: T): Boolean = previous == null && current != null
 
+    inline fun <reified T : Any> bothHaveSameValues(previous: T, current: T): Boolean =
+        T::class.memberProperties
+            .map { property -> property.call(previous) to property.call(current) }
+            .all { (p1, p2) -> p1 == p2 }
+
+    // Generators
+
     inline fun <reified T : Any> generateChangesListForNonNullObject(nonNullObject: T, isPreviousNonNull: Boolean): List<ChangeType> =
-        T::class.memberProperties.map { member ->
-            val propertyStringValue = member.call(nonNullObject).toString()
+        T::class.memberProperties.map { property ->
+            val propertyStringValue = property.call(nonNullObject).toString()
             if (isPreviousNonNull)
-                PropertyUpdate(member.name, propertyStringValue, NULL_VALUE)
+                PropertyUpdate(property.name, propertyStringValue, NULL_VALUE)
             else
-                PropertyUpdate(member.name, NULL_VALUE, propertyStringValue)
+                PropertyUpdate(property.name, NULL_VALUE, propertyStringValue)
         }
 
 }

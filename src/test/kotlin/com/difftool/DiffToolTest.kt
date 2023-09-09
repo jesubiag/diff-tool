@@ -27,6 +27,16 @@ class DiffToolTest {
     }
 
     @Test
+    fun `should return empty when current object did not change`() {
+        val previous = SimplePersonMother.aPerson()
+        val current = SimplePersonMother.aPerson()
+
+        val diff = DiffTool.diff(previous, current)
+
+        assertThat(diff, empty())
+    }
+
+    @Test
     fun `should return all not null object properties when previous is not null and current is null`() {
         val previous = SimplePersonMother.aPerson()
         val current = null
