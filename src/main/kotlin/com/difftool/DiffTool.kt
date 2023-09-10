@@ -17,18 +17,16 @@ object DiffTool {
     inline fun <reified T : Any> diff(previous: T?, current: T?): List<ChangeType> =
         detectAndBuildChanges(previous, current, T::class.memberProperties)
 
-    fun <T> detectAndBuildChanges(previous: T?, current: T?, properties: Properties<T>, suffix: String = ""): List<ChangeType> = when {
+    fun <T> detectAndBuildChanges(previous: T?,
+                                  current: T?,
+                                  properties: Properties<T>,
+                                  suffix: String = ""): List<ChangeType> = when {
         bothObjectsAreNull(previous, current) -> emptyList()
-
         bothObjectsAreTheSame(previous, current) -> emptyList()
-
         onlyCurrentIsNull(previous, current) -> generateChangesListForNonNullObject(previous!!, isPreviousNonNull = true, properties)
-
         onlyPreviousIsNull(previous, current) -> generateChangesListForNonNullObject(current!!, isPreviousNonNull = false, properties)
-
         bothHaveSameValues(previous!!, current!!, properties) -> emptyList()
-
-        else -> generateChangesListTwoNonNullObjects(previous, current, properties, suffix)
+        else -> generateChangesListForTwoNonNullObjects(previous, current, properties, suffix)
     }
 
     // Predicates
@@ -42,7 +40,8 @@ object DiffTool {
     private fun <T> onlyPreviousIsNull(previous: T, current: T): Boolean = previous == null && current != null
 
     private fun <T> bothHaveSameValues(previous: T, current: T, properties: Properties<T>): Boolean =
-        properties.map { property -> property.call(previous) to property.call(current) }
+        properties
+            .map { property -> property.call(previous) to property.call(current) }
             .all { (p1, p2) -> p1 == p2 }
 
     // Generators
@@ -58,10 +57,10 @@ object DiffTool {
                 PropertyUpdate(property.name, NULL_VALUE, propertyStringValue)
         }
 
-    private fun <T> generateChangesListTwoNonNullObjects(previous: T,
-                                                         current: T,
-                                                         properties: Properties<T>,
-                                                         suffix: String = ""): List<ChangeType> =
+    private fun <T> generateChangesListForTwoNonNullObjects(previous: T,
+                                                            current: T,
+                                                            properties: Properties<T>,
+                                                            suffix: String = ""): List<ChangeType> =
         properties.flatMap { property ->
             val propertyName = property.name
             val propertyType = property.returnType
@@ -71,6 +70,10 @@ object DiffTool {
                     listOf(PropertyUpdate(fullPropertyName, property.call(previous), property.call(current)))
                 }
                 isCollectionOrArray(propertyType) -> {
+                    validateId(propertyType)
+
+                    // TODO: check if collection inner type is terminal
+
                     val previousCollection = toCollection(propertyType, property.call(previous))
                     val currentCollection = toCollection(propertyType, property.call(current))
                     val removed = previousCollection.minus(currentCollection.toSet()).map(Any?::toString)
@@ -78,7 +81,7 @@ object DiffTool {
                     listOf(ListUpdate(fullPropertyName, added, removed))
                 }
                 else -> {
-                    val subProperties = (property.returnType.classifier as KClass<*>).memberProperties //?: throw Exception("Unable to get sub properties for $propertyName")
+                    val subProperties = subProperties(property.returnType)
                     detectAndBuildChanges(property.call(previous), property.call(current), subProperties, "$fullPropertyName.")
                 }
             }
@@ -110,4 +113,32 @@ object DiffTool {
             destination
         }
 
+    private fun subProperties(kType: KType): Collection<KProperty1<out Any, *>> =
+        (kType.classifier as KClass<*>).memberProperties
+
+    private fun validateId(kType: KType) {
+        val collectionSubtype = getCollectionSubtype(kType)
+        if (collectionSubtype == null || !hasId(collectionSubtype))
+            throw TypeWithoutIdException(collectionSubtype?.toString() ?: "UnknownType")
+    }
+
+    private fun getCollectionSubtype(kType: KType): KType? {
+        var currentType = kType
+
+        while (true) {
+            currentType = if (isCollection(currentType)) {
+                val elementType = currentType.arguments.firstOrNull()?.type ?: return null
+                elementType
+            } else if (isArray(currentType)) {
+                currentType.arguments.firstOrNull()?.type ?: return null
+            } else {
+                return currentType
+            }
+        }
+    }
+
+    private fun hasId(kType: KType): Boolean = subProperties(kType)
+        .any { subProperty -> subProperty.name == "id"
+                || subProperty.annotations.any { annotation -> annotation is AuditKey }
+        }
 }

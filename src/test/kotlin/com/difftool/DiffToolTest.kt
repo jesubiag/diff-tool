@@ -3,6 +3,8 @@ package com.difftool
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.*
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
+import org.junit.jupiter.api.assertThrows
 
 class DiffToolTest {
 
@@ -126,9 +128,39 @@ class DiffToolTest {
         val diff = DiffTool.diff(previous, current)
 
         val changedSubjectsProperties = arrayOf(
-            ListUpdate("subjects", listOf("Algebra", "Art"), listOf("English"))
+            ListUpdate("subjects", listOf("Biology"), listOf("Math"))
         )
         assertThat(diff, containsInAnyOrder(*changedSubjectsProperties))
+    }
+
+    @Test
+    fun `should fail with TypeWithoutIdException when list item has no id field defined`() {
+        val previous = ObjectsMother.studentDavidWithoutIdsOnList()
+        val current = ObjectsMother.studentDavidWithoutIdsOnListAndOtherSubjects()
+
+        val diff: () -> Unit = { DiffTool.diff(previous, current) }
+
+        assertThrows<TypeWithoutIdException>(diff)
+    }
+
+    @Test
+    fun `should not fail when list item has id field defined`() {
+        val previous = ObjectsMother.studentLisaWithIdFieldOnList()
+        val current = ObjectsMother.studentLisaWithIdFieldOnListAndOtherSubjects()
+
+        val diff: () -> Unit = { DiffTool.diff(previous, current) }
+
+        assertDoesNotThrow(diff)
+    }
+
+    @Test
+    fun `should not fail when list item has annotated id`() {
+        val previous = ObjectsMother.studentAnneWithAnnotatedIdOnList()
+        val current = ObjectsMother.studentAnneWithAnnotatedIdOnListAndOtherSubjects()
+
+        val diff: () -> Unit = { DiffTool.diff(previous, current) }
+
+        assertDoesNotThrow(diff)
     }
 
 }
