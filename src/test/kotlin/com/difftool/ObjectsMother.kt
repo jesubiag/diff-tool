@@ -34,9 +34,9 @@ object ObjectsMother {
 
     fun doubleNestedPersonGaryOlderMoved(): DoubleNestedPerson = DoubleNestedPerson(3, "Gary", 20, aDifferentNestedAddress())
 
-    fun studentBrian(): SimpleStudent = SimpleStudent(100, "Brian", subjectsWithAnnotatedId())
+    fun studentBrian(): SimpleStudent = SimpleStudent(100, "Brian", listOf("Math", "English"))
 
-    fun studentBrianOtherSubjects(): SimpleStudent = SimpleStudent(100, "Brian", otherSubjectsWithAnnotatedId())
+    fun studentBrianOtherSubjects(): SimpleStudent = SimpleStudent(100, "Brian", listOf("Math", "Algebra", "Art"))
 
     fun studentDavidWithoutIdsOnList(): StudentWithoutIdFieldOnListElement = StudentWithoutIdFieldOnListElement(3333, "David", subjectsWithoutIdField())
 

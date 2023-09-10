@@ -128,7 +128,7 @@ class DiffToolTest {
         val diff = DiffTool.diff(previous, current)
 
         val changedSubjectsProperties = arrayOf(
-            ListUpdate("subjects", listOf("Biology"), listOf("Math"))
+            ListUpdate("subjects", listOf("Algebra", "Art"), listOf("English"))
         )
         assertThat(diff, containsInAnyOrder(*changedSubjectsProperties))
     }

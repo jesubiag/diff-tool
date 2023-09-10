@@ -70,7 +70,11 @@ object DiffTool {
                     listOf(PropertyUpdate(fullPropertyName, property.call(previous), property.call(current)))
                 }
                 isCollectionOrArray(propertyType) -> {
-                    validateId(propertyType)
+                    val collectionInnerType = getCollectionInnerType(propertyType)
+
+                    if (!isTerminal(collectionInnerType)) {
+                        validateId(collectionInnerType)
+                    }
 
                     // TODO: check if collection inner type is terminal
 
@@ -116,29 +120,29 @@ object DiffTool {
     private fun subProperties(kType: KType): Collection<KProperty1<out Any, *>> =
         (kType.classifier as KClass<*>).memberProperties
 
-    private fun validateId(kType: KType) {
-        val collectionSubtype = getCollectionSubtype(kType)
-        if (collectionSubtype == null || !hasId(collectionSubtype))
-            throw TypeWithoutIdException(collectionSubtype?.toString() ?: "UnknownType")
+    private fun validateId(collectionInnerType: KType?) {
+        if (collectionInnerType == null || !hasId(collectionInnerType))
+            throw TypeWithoutIdException(collectionInnerType?.toString() ?: "UnknownType")
     }
 
-    private fun getCollectionSubtype(kType: KType): KType? {
+    private fun getCollectionInnerType(kType: KType): KType {
         var currentType = kType
 
         while (true) {
             currentType = if (isCollection(currentType)) {
-                val elementType = currentType.arguments.firstOrNull()?.type ?: return null
+                val elementType = currentType.arguments.firstOrNull()?.type ?: TODO() // TODO
                 elementType
             } else if (isArray(currentType)) {
-                currentType.arguments.firstOrNull()?.type ?: return null
+                currentType.arguments.firstOrNull()?.type ?: TODO() // TODO
             } else {
                 return currentType
             }
         }
     }
 
-    private fun hasId(kType: KType): Boolean = subProperties(kType)
-        .any { subProperty -> subProperty.name == "id"
-                || subProperty.annotations.any { annotation -> annotation is AuditKey }
-        }
+    private fun hasId(kType: KType): Boolean =
+        subProperties(kType)
+            .any { subProperty -> subProperty.name == "id"
+                    || subProperty.annotations.any { annotation -> annotation is AuditKey }
+            }
 }
