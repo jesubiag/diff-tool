@@ -8,7 +8,11 @@ class SubjectWithoutIdField(val name: String)
 
 class StudentWithIdFieldOnListElement(val id: Int, val name: String, val subjects: List<SubjectWithIdField>)
 
-class SubjectWithIdField(val id: String, val name: String)
+data class SubjectWithIdField(val id: String, val name: String) {
+    override fun toString(): String {
+        return name
+    }
+}
 
 class StudentWithAnnotatedIdOnListElement(val id: Int, val name: String, val subjects: List<SubjectWithAnnotatedId>)
 

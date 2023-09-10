@@ -128,7 +128,7 @@ class DiffToolTest {
         val diff = DiffTool.diff(previous, current)
 
         val changedSubjectsProperties = arrayOf(
-            ListUpdate("subjects", listOf("Algebra", "Art"), listOf("English"))
+            ListUpdate(ObjectsMother.Properties.StudentSubjects, listOf("Algebra", "Art"), listOf("English"))
         )
         assertThat(diff, containsInAnyOrder(*changedSubjectsProperties))
     }
@@ -161,6 +161,20 @@ class DiffToolTest {
         val diff: () -> Unit = { DiffTool.diff(previous, current) }
 
         assertDoesNotThrow(diff)
+    }
+
+    @Test
+    fun `should display changed element in list with id in square brackets and added and removed elements`() {
+        val previous = ObjectsMother.studentLisaWithIdFieldOnList()
+        val current = ObjectsMother.studentLisaWithIdFieldOnListAndOtherSubjectsWithDifferentName()
+
+        val diff = DiffTool.diff(previous, current)
+
+        val changedSubjectsProperties = arrayOf(
+            ListUpdate(ObjectsMother.Properties.StudentSubjects, listOf("Art"), listOf("English")),
+            PropertyUpdate("subjects[001_math].name", "Math", "Math I")
+        )
+        assertThat(diff, containsInAnyOrder(*changedSubjectsProperties))
     }
 
 }

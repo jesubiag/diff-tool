@@ -44,7 +44,9 @@ object ObjectsMother {
 
     fun studentLisaWithIdFieldOnList(): StudentWithIdFieldOnListElement = StudentWithIdFieldOnListElement(987, "Lisa", subjectsWithIdField())
 
-    fun studentLisaWithIdFieldOnListAndOtherSubjects(): StudentWithIdFieldOnListElement = StudentWithIdFieldOnListElement(987, "Lisa", otherSubjectsWithIdField())
+    fun studentLisaWithIdFieldOnListAndOtherSubjects(): StudentWithIdFieldOnListElement = StudentWithIdFieldOnListElement(987, "Lisa", subjectWithIdFieldAndIdChanged())
+
+    fun studentLisaWithIdFieldOnListAndOtherSubjectsWithDifferentName(): StudentWithIdFieldOnListElement = StudentWithIdFieldOnListElement(987, "Lisa", subjectWithIdFieldAndNameChanged())
 
     fun studentAnneWithAnnotatedIdOnList(): StudentWithAnnotatedIdOnListElement = StudentWithAnnotatedIdOnListElement(1908, "Anne", subjectsWithAnnotatedId())
 
@@ -68,7 +70,9 @@ object ObjectsMother {
 
     private fun subjectsWithIdField() = listOf(SubjectWithIdField("001_math", "Math"), SubjectWithIdField("062_English", "English"))
 
-    private fun otherSubjectsWithIdField() = listOf(SubjectWithIdField("999_math", "Math"), SubjectWithIdField("555_English", "English"))
+    private fun subjectWithIdFieldAndIdChanged() = listOf(SubjectWithIdField("999_math", "Math"), SubjectWithIdField("555_English", "English"))
+
+    private fun subjectWithIdFieldAndNameChanged() = listOf(SubjectWithIdField("001_math", "Math I"), SubjectWithIdField("088_Art", "Art"))
 
     private fun subjectsWithAnnotatedId() = listOf(SubjectWithAnnotatedId("Math"), SubjectWithAnnotatedId("English"))
 

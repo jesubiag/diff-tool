@@ -71,18 +71,60 @@ object DiffTool {
                 }
                 isCollectionOrArray(propertyType) -> {
                     val collectionInnerType = getCollectionInnerType(propertyType)
-
-                    if (!isTerminal(collectionInnerType)) {
-                        validateId(collectionInnerType)
-                    }
-
-                    // TODO: check if collection inner type is terminal
+                    val isInnerTypeTerminal = isTerminal(collectionInnerType)
 
                     val previousCollection = toCollection(propertyType, property.call(previous))
                     val currentCollection = toCollection(propertyType, property.call(current))
-                    val removed = previousCollection.minus(currentCollection.toSet()).map(Any?::toString)
-                    val added = currentCollection.minus(previousCollection.toSet()).map(Any?::toString)
-                    listOf(ListUpdate(fullPropertyName, added, removed))
+
+                    val modifiedInnerProperties = if (!isInnerTypeTerminal) {
+                        val idProperty = findIdProperty(collectionInnerType)
+                        failIfNoId(collectionInnerType, idProperty)
+
+                        val subPropertiesById = mutableMapOf<Any, Pair<Any?, Any?>>()
+
+                        for (previousCollectionElement in previousCollection) {
+                            val previousElementId = idProperty!!.call(previousCollectionElement)!!
+                            subPropertiesById[previousElementId] = previousCollectionElement to null
+                        }
+                        for (currentCollectionElement in currentCollection) {
+                            val currentElementId = idProperty!!.call(currentCollectionElement)!!
+                            if (currentElementId in subPropertiesById) {
+                                val pair = subPropertiesById[currentElementId]
+                                subPropertiesById[currentElementId] = pair!!.copy(second = currentCollectionElement)
+                            }
+                            else {
+                                subPropertiesById[currentElementId] = null to currentCollectionElement
+                            }
+                        }
+
+                        val innerChanges = subPropertiesById.entries
+                            .filter { it.value.first != null && it.value.second != null }
+                            .flatMap { (id, pair) ->
+                                val (previousCollectionElement, currentCollectionElement) = pair
+                                val innerPropertySuffix = "$propertyName[$id]."
+                                val innerTypeProperties = (collectionInnerType.classifier as KClass<*>).memberProperties
+                                generateChangesListForTwoNonNullObjects(previousCollectionElement,
+                                    currentCollectionElement,
+                                    innerTypeProperties,
+                                    innerPropertySuffix)
+                            }
+
+                        val removed = subPropertiesById.entries
+                            .filter { (_, pair) -> pair.first != null && pair.second == null }
+                            .map { it.value.first.toString() }
+                        val added = subPropertiesById.entries
+                            .filter { (_, pair) -> pair.first == null && pair.second != null }
+                            .map { it.value.second.toString() }
+
+                        val addedAndRemoved = ListUpdate(propertyName, added, removed)
+
+                        innerChanges + addedAndRemoved
+                    } else {
+                        trackAddedAndRemovedElements(previousCollection, currentCollection, fullPropertyName)
+                    }
+
+//                    addedAndRemovedElements + modifiedInnerProperties
+                    modifiedInnerProperties
                 }
                 else -> {
                     val subProperties = subProperties(property.returnType)
@@ -90,6 +132,14 @@ object DiffTool {
                 }
             }
         }.filter { changeType -> changeType.hasChanged }
+
+    private fun trackAddedAndRemovedElements(previousCollection: Collection<*>,
+                                                 currentCollection: Collection<*>,
+                                                 fullPropertyName: String): List<ListUpdate> {
+        val removed = previousCollection.minus(currentCollection.toSet()).map(Any?::toString)
+        val added = currentCollection.minus(previousCollection.toSet()).map(Any?::toString)
+        return listOf(ListUpdate(fullPropertyName, added, removed))
+    }
 
     // Other
 
@@ -120,9 +170,9 @@ object DiffTool {
     private fun subProperties(kType: KType): Collection<KProperty1<out Any, *>> =
         (kType.classifier as KClass<*>).memberProperties
 
-    private fun validateId(collectionInnerType: KType?) {
-        if (collectionInnerType == null || !hasId(collectionInnerType))
-            throw TypeWithoutIdException(collectionInnerType?.toString() ?: "UnknownType")
+    private fun failIfNoId(collectionInnerType: KType, idProperty: KProperty1<out Any, *>?) {
+        if (!hasId(idProperty))
+            throw TypeWithoutIdException(collectionInnerType.toString())
     }
 
     private fun getCollectionInnerType(kType: KType): KType {
@@ -130,19 +180,20 @@ object DiffTool {
 
         while (true) {
             currentType = if (isCollection(currentType)) {
-                val elementType = currentType.arguments.firstOrNull()?.type ?: TODO() // TODO
+                val elementType = currentType.arguments.firstOrNull()?.type ?: throw Exception("Unable to find collection inner type")
                 elementType
             } else if (isArray(currentType)) {
-                currentType.arguments.firstOrNull()?.type ?: TODO() // TODO
+                currentType.arguments.firstOrNull()?.type ?: throw Exception("Unable to find collection inner type")
             } else {
                 return currentType
             }
         }
     }
 
-    private fun hasId(kType: KType): Boolean =
-        subProperties(kType)
-            .any { subProperty -> subProperty.name == "id"
-                    || subProperty.annotations.any { annotation -> annotation is AuditKey }
-            }
+    private fun findIdProperty(kType: KType): KProperty1<out Any, *>? =
+        subProperties(kType).find { subProperty -> subProperty.name == "id"
+                || subProperty.annotations.any { annotation -> annotation is AuditKey } }
+
+    private fun hasId(idProperty: KProperty1<out Any, *>?): Boolean =
+        idProperty != null
 }
