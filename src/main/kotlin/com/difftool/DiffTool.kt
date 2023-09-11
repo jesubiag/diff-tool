@@ -29,8 +29,6 @@ object DiffTool {
         else -> generateChangesListForTwoNonNullObjects(previous, current, properties, suffix)
     }
 
-    // Predicates
-
     private fun <T> bothObjectsAreNull(previous: T, current: T): Boolean = previous == null && current == null
 
     private fun <T> bothObjectsAreTheSame(previous: T, current: T): Boolean = previous == current
@@ -43,8 +41,6 @@ object DiffTool {
         properties
             .map { property -> property.call(previous) to property.call(current) }
             .all { (p1, p2) -> p1 == p2 }
-
-    // Generators
 
     private fun <T> generateChangesListForNonNullObject(nonNullObject: T,
                                                         isPreviousNonNull: Boolean,
@@ -76,26 +72,11 @@ object DiffTool {
                     val previousCollection = toCollection(propertyType, property.call(previous))
                     val currentCollection = toCollection(propertyType, property.call(current))
 
-                    val modifiedInnerProperties = if (!isInnerTypeTerminal) {
+                    val changesOnInnerProperties = if (!isInnerTypeTerminal) {
                         val idProperty = findIdProperty(collectionInnerType)
                         failIfNoId(collectionInnerType, idProperty)
 
-                        val subPropertiesById = mutableMapOf<Any, Pair<Any?, Any?>>()
-
-                        for (previousCollectionElement in previousCollection) {
-                            val previousElementId = idProperty!!.call(previousCollectionElement)!!
-                            subPropertiesById[previousElementId] = previousCollectionElement to null
-                        }
-                        for (currentCollectionElement in currentCollection) {
-                            val currentElementId = idProperty!!.call(currentCollectionElement)!!
-                            if (currentElementId in subPropertiesById) {
-                                val pair = subPropertiesById[currentElementId]
-                                subPropertiesById[currentElementId] = pair!!.copy(second = currentCollectionElement)
-                            }
-                            else {
-                                subPropertiesById[currentElementId] = null to currentCollectionElement
-                            }
-                        }
+                        val subPropertiesById = groupSubPropertiesById(previousCollection, idProperty, currentCollection)
 
                         val innerChanges = subPropertiesById.entries
                             .filter { it.value.first != null && it.value.second != null }
@@ -123,8 +104,7 @@ object DiffTool {
                         trackAddedAndRemovedElements(previousCollection, currentCollection, fullPropertyName)
                     }
 
-//                    addedAndRemovedElements + modifiedInnerProperties
-                    modifiedInnerProperties
+                    changesOnInnerProperties
                 }
                 else -> {
                     val subProperties = subProperties(property.returnType)
@@ -133,6 +113,27 @@ object DiffTool {
             }
         }.filter { changeType -> changeType.hasChanged }
 
+    private fun groupSubPropertiesById(previousCollection: Collection<*>,
+                                       idProperty: KProperty1<out Any, *>?,
+                                       currentCollection: Collection<*>): MutableMap<Any, Pair<Any?, Any?>> {
+        val subPropertiesById = mutableMapOf<Any, Pair<Any?, Any?>>()
+
+        for (previousCollectionElement in previousCollection) {
+            val previousElementId = idProperty!!.call(previousCollectionElement)!!
+            subPropertiesById[previousElementId] = previousCollectionElement to null
+        }
+        for (currentCollectionElement in currentCollection) {
+            val currentElementId = idProperty!!.call(currentCollectionElement)!!
+            if (currentElementId in subPropertiesById) {
+                val pair = subPropertiesById[currentElementId]
+                subPropertiesById[currentElementId] = pair!!.copy(second = currentCollectionElement)
+            } else {
+                subPropertiesById[currentElementId] = null to currentCollectionElement
+            }
+        }
+        return subPropertiesById
+    }
+
     private fun trackAddedAndRemovedElements(previousCollection: Collection<*>,
                                                  currentCollection: Collection<*>,
                                                  fullPropertyName: String): List<ListUpdate> {
@@ -140,8 +141,6 @@ object DiffTool {
         val added = currentCollection.minus(previousCollection.toSet()).map(Any?::toString)
         return listOf(ListUpdate(fullPropertyName, added, removed))
     }
-
-    // Other
 
     private fun isTerminal(kType: KType): Boolean = kType.isSubtypeOf(typeOf<Int>())
             || kType.isSubtypeOf(typeOf<String>())

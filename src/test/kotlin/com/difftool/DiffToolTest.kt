@@ -177,4 +177,41 @@ class DiffToolTest {
         assertThat(diff, containsInAnyOrder(*changedSubjectsProperties))
     }
 
+    @Test
+    fun `should identify all changes in a more complex scenario with multiple nested properties`() {
+        val country = Country("Country name")
+        val artist = Artist("Artist Name", country)
+        val songs = listOf(
+            Song(SongId("sn1"), "Song name 1", 1, artist),
+            Song(SongId("sn2"), "Song name 2", 2, artist),
+            Song(SongId("sn3"), "Song name 3", 3, artist),
+            Song(SongId("sn4"), "Song name 4", 4, artist)
+        )
+        val genres = listOf("Genre 1", "Genre 2", "Genre 3")
+        val previous = Album("Album name", 2008, songs, genres)
+
+        val otherCountry = Country("Other Country name")
+        val artistMoved = Artist("Artist Name", otherCountry)
+        val differentSongs = listOf(
+            Song(SongId("sn1"), "Song name 1", 1, artistMoved),
+            Song(SongId("sn2"), "Song name 22", 22, artistMoved),
+            Song(SongId("sn10"), "Song name 10", 10, artist)
+        )
+        val differentGenres = listOf("Genre 1", "Genre 4")
+        val current = Album("Album name", 2030, differentSongs, differentGenres)
+
+        val diff = DiffTool.diff(previous, current)
+
+        val changedProperties = arrayOf(
+            PropertyUpdate("year", "2008", "2030"),
+            PropertyUpdate("songs[sn1].artist.country.name", "Country name", "Other Country name"),
+            PropertyUpdate("songs[sn2].artist.country.name", "Country name", "Other Country name"),
+            PropertyUpdate("songs[sn2].name", "Song name 2", "Song name 22"),
+            PropertyUpdate("songs[sn2].number", "2", "22"),
+            ListUpdate("songs", listOf("Song name 10"), listOf("Song name 3", "Song name 4")),
+            ListUpdate("genres", listOf("Genre 4"), listOf("Genre 2", "Genre 3"))
+        )
+        assertThat(diff, containsInAnyOrder(*changedProperties))
+    }
+
 }
