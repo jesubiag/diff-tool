@@ -20,13 +20,13 @@ object DiffTool {
     fun <T> detectAndBuildChanges(previous: T?,
                                   current: T?,
                                   properties: Properties<T>,
-                                  suffix: String = ""): List<ChangeType> = when {
+                                  prefix: String = ""): List<ChangeType> = when {
         bothObjectsAreNull(previous, current) -> emptyList()
         bothObjectsAreTheSame(previous, current) -> emptyList()
         onlyCurrentIsNull(previous, current) -> generateChangesListForNonNullObject(previous!!, isPreviousNonNull = true, properties)
         onlyPreviousIsNull(previous, current) -> generateChangesListForNonNullObject(current!!, isPreviousNonNull = false, properties)
         bothHaveSameValues(previous!!, current!!, properties) -> emptyList()
-        else -> generateChangesListForTwoNonNullObjects(previous, current, properties, suffix)
+        else -> generateChangesListForTwoNonNullObjects(previous, current, properties, prefix)
     }
 
     private fun <T> bothObjectsAreNull(previous: T, current: T): Boolean = previous == null && current == null
@@ -56,11 +56,11 @@ object DiffTool {
     private fun <T> generateChangesListForTwoNonNullObjects(previous: T,
                                                             current: T,
                                                             properties: Properties<T>,
-                                                            suffix: String = ""): List<ChangeType> =
+                                                            prefix: String = ""): List<ChangeType> =
         properties.flatMap { property ->
             val propertyName = property.name
             val propertyType = property.returnType
-            val fullPropertyName = "$suffix$propertyName"
+            val fullPropertyName = "$prefix$propertyName"
             when {
                 isTerminal(propertyType) -> {
                     listOf(PropertyUpdate(fullPropertyName, property.call(previous), property.call(current)))
@@ -82,12 +82,12 @@ object DiffTool {
                             .filter { it.value.first != null && it.value.second != null }
                             .flatMap { (id, pair) ->
                                 val (previousCollectionElement, currentCollectionElement) = pair
-                                val innerPropertySuffix = "$propertyName[$id]."
+                                val innerPropertyPrefix = "$propertyName[$id]."
                                 val innerTypeProperties = (collectionInnerType.classifier as KClass<*>).memberProperties
                                 generateChangesListForTwoNonNullObjects(previousCollectionElement,
-                                    currentCollectionElement,
-                                    innerTypeProperties,
-                                    innerPropertySuffix)
+                                                                        currentCollectionElement,
+                                                                        innerTypeProperties,
+                                                                        innerPropertyPrefix)
                             }
 
                         val removed = subPropertiesById.entries
