@@ -9,7 +9,7 @@ import org.junit.jupiter.api.assertThrows
 class DiffToolTest {
 
     @Test
-    fun `should return no changes when previous and current objects are null`() {
+    fun shouldReturnNoChangesWhenPreviousAndCurrentObjectsAreNull() {
         val previous: SimplePerson? = null
         val current: SimplePerson? = null
 
@@ -19,7 +19,7 @@ class DiffToolTest {
     }
 
     @Test
-    fun `should return empty when both objects are the same`() {
+    fun shouldReturnEmptyWhenBothObjectsAreTheSame() {
         val previous = ObjectsMother.personJohn()
         val current = previous
 
@@ -29,7 +29,7 @@ class DiffToolTest {
     }
 
     @Test
-    fun `should return empty when current object did not change`() {
+    fun shouldReturnEmptyWhenCurrentObjectDidNotChange() {
         val previous = ObjectsMother.personJohn()
         val current = ObjectsMother.personJohn()
 
@@ -39,7 +39,7 @@ class DiffToolTest {
     }
 
     @Test
-    fun `should return null properties when previous object is fully defined and current object is null`() {
+    fun shouldReturnNullPropertiesWhenPreviousObjectIsFullyDefinedAndCurrentObjectIsNull() {
         val previous = ObjectsMother.personJohn()
         val current = null
 
@@ -54,7 +54,7 @@ class DiffToolTest {
     }
 
     @Test
-    fun `should return all not null object properties when previous is null and current is not null`() {
+    fun shouldReturnAllNotNullObjectPropertiesWhenPreviousIsNullAndCurrentIsNotNull() {
         val previous = null
         val current = ObjectsMother.personJohn()
 
@@ -69,7 +69,7 @@ class DiffToolTest {
     }
 
     @Test
-    fun `should return single property update when just changing root primitive property`() {
+    fun shouldReturnSinglePropertyUpdateWhenJustChangingRootPrimitiveProperty() {
         val previous = ObjectsMother.personJohn()
         val current = ObjectsMother.personJohnOlder()
 
@@ -80,7 +80,7 @@ class DiffToolTest {
     }
 
     @Test
-    fun `should return no changes when two objects with nested properties are the same`() {
+    fun shouldReturnNoChangesWhenTwoObjectsWithNestedPropertiesAreTheSame() {
         val previous = ObjectsMother.nestedPersonMike()
         val current = ObjectsMother.nestedPersonMike()
 
@@ -90,7 +90,7 @@ class DiffToolTest {
     }
 
     @Test
-    fun `should return list of changes with dot notation on two nested objects on a single level`() {
+    fun shouldReturnListOfChangesWithDotNotationOnTwoNestedObjectsOnASingleLevel() {
         val previous = ObjectsMother.nestedPersonMike()
         val current = ObjectsMother.nestedPersonMikeMoved()
 
@@ -104,7 +104,7 @@ class DiffToolTest {
     }
 
     @Test
-    fun `should return list of changes with dot notation on two nested objects on a double level`() {
+    fun shouldReturnListOfChangesWithDotNotationOnTwoNestedObjectsOnADoubleLevel() {
         val previous = ObjectsMother.doubleNestedPersonGary()
         val current = ObjectsMother.doubleNestedPersonGaryOlderMoved()
 
@@ -121,7 +121,7 @@ class DiffToolTest {
     }
 
     @Test
-    fun `should return list of changes with added and removed when property is a list`() {
+    fun shouldReturnListOfChangesWithAddedAndRemovedWhenPropertyIsAList() {
         val previous = ObjectsMother.studentBrian()
         val current = ObjectsMother.studentBrianOtherSubjects()
 
@@ -134,7 +134,7 @@ class DiffToolTest {
     }
 
     @Test
-    fun `should fail with TypeWithoutIdException when list item has no id field defined`() {
+    fun shouldFailWithTypeWithoutIdExceptionWhenListItemHasNoIdFieldDefined() {
         val previous = ObjectsMother.studentDavidWithoutIdsOnList()
         val current = ObjectsMother.studentDavidWithoutIdsOnListAndOtherSubjects()
 
@@ -144,7 +144,7 @@ class DiffToolTest {
     }
 
     @Test
-    fun `should not fail when list item has id field defined`() {
+    fun shouldNotFailWhenListItemHasIdFieldDefined() {
         val previous = ObjectsMother.studentLisaWithIdFieldOnList()
         val current = ObjectsMother.studentLisaWithIdFieldOnListAndOtherSubjects()
 
@@ -154,7 +154,7 @@ class DiffToolTest {
     }
 
     @Test
-    fun `should not fail when list item has annotated id`() {
+    fun shouldNotFailWhenListItemHasAnnotatedId() {
         val previous = ObjectsMother.studentAnneWithAnnotatedIdOnList()
         val current = ObjectsMother.studentAnneWithAnnotatedIdOnListAndOtherSubjects()
 
@@ -164,7 +164,7 @@ class DiffToolTest {
     }
 
     @Test
-    fun `should display changed element in list with id in square brackets and added and removed elements`() {
+    fun shouldDisplayChangedElementInListWithIdInSquareBracketsAndAddedAndRemovedElements() {
         val previous = ObjectsMother.studentLisaWithIdFieldOnList()
         val current = ObjectsMother.studentLisaWithIdFieldOnListAndOtherSubjectsWithDifferentName()
 
@@ -178,8 +178,9 @@ class DiffToolTest {
     }
 
     @Test
-    fun `should identify all changes in a more complex scenario with multiple nested properties`() {
-        val country = Country("Country name")
+    fun shouldIdentifyAllChangesInAMoreComplexScenarioWithMultipleNestedProperties() {
+        val countryName = "Country name"
+        val country = Country(countryName)
         val artist = Artist("Artist Name", country)
         val songs = listOf(
             Song(SongId("sn1"), "Song name 1", 1, artist),
@@ -190,7 +191,8 @@ class DiffToolTest {
         val genres = listOf("Genre 1", "Genre 2", "Genre 3")
         val previous = Album("Album name", 2008, songs, genres)
 
-        val otherCountry = Country("Other Country name")
+        val otherCountryName = "Other Country name"
+        val otherCountry = Country(otherCountryName)
         val artistMoved = Artist("Artist Name", otherCountry)
         val differentSongs = listOf(
             Song(SongId("sn1"), "Song name 1", 1, artistMoved),
@@ -204,8 +206,8 @@ class DiffToolTest {
 
         val changedProperties = arrayOf(
             PropertyUpdate("year", "2008", "2030"),
-            PropertyUpdate("songs[sn1].artist.country.name", "Country name", "Other Country name"),
-            PropertyUpdate("songs[sn2].artist.country.name", "Country name", "Other Country name"),
+            PropertyUpdate("songs[sn1].artist.country.name", countryName, otherCountryName),
+            PropertyUpdate("songs[sn2].artist.country.name", countryName, otherCountryName),
             PropertyUpdate("songs[sn2].name", "Song name 2", "Song name 22"),
             PropertyUpdate("songs[sn2].number", "2", "22"),
             ListUpdate("songs", listOf("Song name 10"), listOf("Song name 3", "Song name 4")),
