@@ -9,7 +9,7 @@ import org.junit.jupiter.api.assertThrows
 class DiffToolTest {
 
     @Test
-    fun `should return empty for two null objects`() {
+    fun `should return no changes when previous and current objects are null`() {
         val previous: SimplePerson? = null
         val current: SimplePerson? = null
 
@@ -39,7 +39,7 @@ class DiffToolTest {
     }
 
     @Test
-    fun `should return all not null object properties when previous is not null and current is null`() {
+    fun `should return null properties when previous object is fully defined and current object is null`() {
         val previous = ObjectsMother.personJohn()
         val current = null
 
@@ -69,7 +69,7 @@ class DiffToolTest {
     }
 
     @Test
-    fun `should return list of changes on two non nested objects`() {
+    fun `should return single property update when just changing root primitive property`() {
         val previous = ObjectsMother.personJohn()
         val current = ObjectsMother.personJohnOlder()
 
@@ -80,7 +80,7 @@ class DiffToolTest {
     }
 
     @Test
-    fun `should return empty when two objects with nested properties have the same values`() {
+    fun `should return no changes when two objects with nested properties are the same`() {
         val previous = ObjectsMother.nestedPersonMike()
         val current = ObjectsMother.nestedPersonMike()
 
