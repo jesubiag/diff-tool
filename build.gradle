@@ -1,6 +1,7 @@
 plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.9.0'
     id 'application'
+    id "org.sonarqube" version "4.3.0.3225"
 }
 
 group = 'com.difftool'
@@ -22,9 +23,15 @@ test {
 }
 
 kotlin {
-    jvmToolchain(8)
+    jvmToolchain(17)
 }
 
 application {
     mainClassName = 'MainKt'
+}
+
+sonar {
+    properties {
+        property "sonar.projectKey", "diff-tool"
+    }
 }
